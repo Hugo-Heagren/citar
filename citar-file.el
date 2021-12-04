@@ -124,13 +124,20 @@ Example: ':/path/to/test.pdf:PDF'."
          (mapcar (apply-partially #'expand-file-name fn) dirs)))
      parts)))
 
+(defun citar-file--find-additional-multi-dirs (key dirs extensions)
+  "Return a list of files and variants for KEY from list of DIRS for EXTENSIONS."
+  (seq-mapcat (lambda (dir) (citar-file--find-additional key dir extensions)) dirs))
+
+(defun citar-file--find-additional (key dir extensions)
+  "Return a list of files and variants from DIR for KEY for EXTENTSIONS."
+  (seq-filter
+    (lambda (fn)
+      (member (file-name-extension fn) extensions)) (file-name-all-completions key dir)))
+
 (defun citar-file--possible-names (key dirs extensions &optional entry find-additional)
   "Possible names for files correponding to KEY, ENTRY with EXTENSIONS in DIRS."
     (let* ((filematch (when find-additional
-                        (format "\\`%s\\(?:%s.*\\)?\\.\\(?:%s\\)\\'"
-                                (regexp-quote key)
-                                (if (eq t find-additional) "" find-additional)
-                                (mapconcat #'regexp-quote extensions "\\|"))))
+                        (citar-file--find-additional-multi-dirs key dirs extensions)))
            (results-key (seq-mapcat
                          (lambda (dir)
                            (if filematch
